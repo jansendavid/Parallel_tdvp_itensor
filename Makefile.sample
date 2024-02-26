@@ -1,0 +1,60 @@
+#This should point to the location of the ITensor library
+ITENSOR_LIBRARY_DIR=$(HOME)/software/itensor
+
+#These are sample MPI flags and should be adjusted
+#for the specific version and location of MPI on your computer
+#With some MPI distributions, you can use the command
+#  mpicxx --showme:compile
+#  mpicxx --showme:link
+#to see the compiler flags (CFLAGS and LFLAGS respectively) for your MPI installation 
+MPI_CFLAGS=-I/usr/local/Cellar/open-mpi/1.10.1/include
+MPI_LFLAGS=-I/usr/local/Cellar/open-mpi/1.10.1/include -L/usr/local/opt/libevent/lib -L/usr/local/Cellar/open-mpi/1.10.1/lib -lmpi_cxx -lmpi
+
+ifdef app
+APP=$(app)
+else
+APP=pdmrg
+endif
+
+HEADERS=parallel_dmrg.h partition.h
+
+OBJECTS=$(APP).o
+
+include $(ITENSOR_LIBRARY_DIR)/this_dir.mk
+include $(ITENSOR_LIBRARY_DIR)/options.mk
+
+#Mappings --------------
+GOBJECTS=$(patsubst %,.debug_objs/%, $(OBJECTS))
+
+#Rules ------------------
+
+%.o: %.cc $(HEADERS)
+	$(CCCOM) $(MPI_CFLAGS) -c $(CCFLAGS) -o $@ $<
+
+.debug_objs/%.o: %.cc $(HEADERS)
+	$(CCCOM) $(MPI_CFLAGS) -c $(CCGFLAGS) -o $@ $<
+
+%.o: %.cpp $(HEADERS)
+	$(CCCOM) $(MPI_CFLAGS) -c $(CCFLAGS) -o $@ $<
+
+.debug_objs/%.o: %.cpp $(HEADERS)
+	$(CCCOM) $(MPI_CFLAGS) -c $(CCGFLAGS) -o $@ $<
+
+#Targets -----------------
+
+default: build
+
+build: $(APP)
+debug: $(APP)-g
+
+$(APP): $(OBJECTS) 
+	$(CCCOM) $(MPI_LFLAGS) $(CCFLAGS) $(OBJECTS) -o $(APP) $(LIBFLAGS)
+
+$(APP)-g: mkdebugdir $(GOBJECTS) $(ITENSOR_GLIBS)
+	$(CCCOM) $(MPI_LFLAGS) $(CCGFLAGS) $(GOBJECTS) -o $(APP)-g $(LIBGFLAGS)
+
+mkdebugdir:
+	mkdir -p .debug_objs
+
+clean:
+	rm -fr *.o $(APP) $(APP)-g .debug_objs
