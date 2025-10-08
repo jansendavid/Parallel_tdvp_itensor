@@ -4,9 +4,9 @@
 #include "itensor/mps/dmrg.h"
 #include "itensor/util/parallel.h"
 #include "partition.h"
-#include "lbo.hpp"
+#include "lbo_files/lbo.hpp"
 #include"files.hpp"
-#include"lbo_solvers.h"
+#include"lbo_files/lbo_solvers.h"
 #include"write_data.h"
 
 
